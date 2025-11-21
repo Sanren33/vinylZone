@@ -7,28 +7,24 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Vinyl {
+model vinyl {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   title       String
   artist      String
   year        Int?
   label       String?
   genre       String?
-  tracks      Track[]
+  tracks      track[]
   description String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-
-  @@map("vinyls")
 }
 
-model Track {
+model track {
   id       String @id @default(auto()) @map("_id") @db.ObjectId
   vinylId  String @db.ObjectId
-  vinyl    Vinyl  @relation(fields: [vinylId], references: [id], onDelete: Cascade)
+  vinyl    vinyl  @relation(fields: [vinylId], references: [id], onDelete: Cascade)
   name     String
   duration String
   side     String // A1, A2, B1, B2, etc.
-
-  @@map("tracks")
 }
