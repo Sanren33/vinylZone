@@ -7,24 +7,28 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model cats {
-  id             String    @id @default(auto()) @map("_id") @db.ObjectId
-  adoptionDate   DateTime? @db.Date
-  birthDate      DateTime? @db.Date
-  breed          String?
-  declawed       Boolean?
-  description    String?
-  fosterDate     DateTime? @db.Date
-  fosterDuration Int?
-  location       String?
-  name           String?
-  neutered       Boolean?
-  sex            String?
-  primaryColor   String?
-  secondaryColor String?
-  playfulness    Int?
-  appetite       Int?
-  microchip      Int?
-  isAdopted      Boolean?
-  food           String?
+model Vinyl {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  artist      String
+  year        Int?
+  label       String?
+  genre       String?
+  tracks      Track[]
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("vinyls")
+}
+
+model Track {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  vinylId  String @db.ObjectId
+  vinyl    Vinyl  @relation(fields: [vinylId], references: [id], onDelete: Cascade)
+  name     String
+  duration String
+  side     String // A1, A2, B1, B2, etc.
+
+  @@map("tracks")
 }
