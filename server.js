@@ -17,6 +17,10 @@ app.use(express.json())
 import apiRoutes from './routes/api.js'
 app.use('/', apiRoutes)
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.json({ status: 'ok', message: 'Server is running' });
+});
 
 const port = 3001
 app.listen(port, () => {
