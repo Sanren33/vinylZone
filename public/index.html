@@ -1,291 +1,431 @@
 <!DOCTYPE html>
 <html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vinyl Collection Manager</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>🎵 Vinyl Collection Manager</h1>
+        <p>Manage your vinyl record collection</p>
+      </header>
 
-<head>
-  <meta charset="utf-8" />
-  <meta
-    name="viewport"
-    content="width=device-width initial-scale=1"
-  />
+      <div class="tabs">
+        <button class="tab-btn active" onclick="showTab('browse')">
+          Browse Records
+        </button>
+        <button class="tab-btn" onclick="showTab('add')">Add Vinyl</button>
+        <button class="tab-btn" onclick="showTab('statistics')">
+          Statistics
+        </button>
+      </div>
 
-  <title>Collecting Data</title>
+      <!-- Browse Tab -->
+      <div id="browse-tab" class="tab-content active">
+        <h2>My Vinyl Collection</h2>
 
-  <link
-    rel="preconnect"
-    href="https://fonts.googleapis.com"
-  >
-  <link
-    rel="preconnect"
-    href="https://fonts.gstatic.com"
-    crossorigin
-  >
-  <link
-    href="https://fonts.googleapis.com/css2?family=Jost:wght@100..900&display=swap"
-    rel="stylesheet"
-  >
+        <div class="filters">
+          <input
+            type="text"
+            id="searchInput"
+            placeholder="Search by title or artist..."
+          />
+          <select id="genreFilter">
+            <option value="">All Genres</option>
+          </select>
+          <select id="sortBy">
+            <option value="createdAt">Sort by Date Added</option>
+            <option value="title">Sort by Title</option>
+            <option value="artist">Sort by Artist</option>
+            <option value="year">Sort by Year</option>
+          </select>
+          <select id="sortOrder">
+            <option value="desc">Descending</option>
+            <option value="asc">Ascending</option>
+          </select>
+          <button onclick="applyFilters()">Apply Filters</button>
+        </div>
 
+        <div id="vinylsContainer" class="vinyl-grid"></div>
+      </div>
 
-  <link
-    rel="stylesheet"
-    href="style.css"
-  />
+      <!-- Add Vinyl Tab -->
+      <div id="add-tab" class="tab-content">
+        <h2>Add New Vinyl</h2>
+        <div id="addMessage"></div>
+        <form id="addVinylForm">
+          <div class="form-group">
+            <label>Title *</label>
+            <input type="text" name="title" required />
+          </div>
+          <div class="form-group">
+            <label>Artist *</label>
+            <input type="text" name="artist" required />
+          </div>
+          <div class="form-group">
+            <label>Year</label>
+            <input type="number" name="year" min="1900" max="2025" />
+          </div>
+          <div class="form-group">
+            <label>Label</label>
+            <input type="text" name="label" />
+          </div>
+          <div class="form-group">
+            <label>Genre</label>
+            <input type="text" name="genre" />
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <textarea name="description"></textarea>
+          </div>
 
+          <div class="tracks-section">
+            <h3>Tracks</h3>
+            <div id="tracksContainer"></div>
+            <button type="button" onclick="addTrackInput()" class="secondary">
+              + Add Track
+            </button>
+          </div>
 
-</head>
+          <button type="submit" style="margin-top: 20px;">Add Vinyl</button>
+        </form>
+      </div>
 
-<body>
-  <header>
-    <h1>Collecting Data</h1>
-    <h4>POST content to an API Endpoint from an HTML Form to be stored in a Database.</h4>
-
-    <div class="intro">
-      <p>Previously we published data from a database by <a
-          href="https://github.com/ixd-system-design/API-Endpoints-for-Publishing-and-Searching"
-        >creating our own API</a>. Now, let's build functionality to allow users to submit and store data. We will add
-        two core elements:</p>
-      <ul>
-        <li>A <a
-            target="_blank"
-            href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST"
-          >POST</a> endpoint on the backend.</li>
-        <li>An <a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/form">HTML Form</a> on the
-          front-end.</li>
-      </ul>
-      <p> Form submissions are sent as JSON data in the body of a <a
-          target="_blank"
-          href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/POST"
-        >POST</a> request to an API endpoint, and saved to <a
-          href="https://www.mongodb.com/products/platform/atlas-database"
-        >MongoDB Atlas</a>.
-        API Endpoints are defined by <a href="https://expressjs.com">Express</a>, using <a
-          href="https://www.prisma.io/orm"
-        >Prisma</a> to communicate with the database.
-      </p>
-      <p>When successful, we will log the submission to the console, and also refresh the data list below. NOTE: this
-        demo implements the 'C' and 'R' of 'CRUD' (Create and Read) . We will deal with the 'U' and 'D' (Update and
-        Delete) elsewhere.</p>
-      </p>
+      <!-- Statistics Tab -->
+      <div id="statistics-tab" class="tab-content">
+        <h2>Collection Statistics</h2>
+        <div id="statsContainer"></div>
+      </div>
     </div>
-  </header>
 
-  <section id="status">
-    <p id="readyStatus">✅ MongoDB is Ready</p>
-    <p id="notReadyStatus">❌ MongoDB is not connected. Please check your connection string in <code>.env</code> file.
-    </p>
-  </section>
+    <!-- View/Edit Modal -->
+    <div id="vinylModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="modalTitle"></h2>
+          <button class="close-btn" onclick="closeModal()">&times;</button>
+        </div>
+        <div id="modalBody"></div>
+      </div>
+    </div>
 
-  <main>
-    <h2>🐈 <span>Share a Cat</span></h2>
-    <p>Share your kitty with the community</p>
-    <form id="myForm">
-      <fieldset>
-        <label for="name">Cat Name</label>
-        <input
-          required
-          type="text"
-          name="name"
-          id="name"
-          placeholder="e.g. Sofia"
-          autocomplete="off"
-        />
-        <small class="validation">Name is required</small>
-      </fieldset>
+    <script>
+      const API_URL = "/vinyls";
+      let currentVinyls = [];
 
-      <fieldset>
-        <label for="birthDate">Birth Date</label>
-        <input
-          type="date"
-          name="birthDate"
-          id="birthDate"
-        />
-      </fieldset>
+      // Tab Management
+      function showTab(tabName) {
+        document
+          .querySelectorAll(".tab-content")
+          .forEach((tab) => tab.classList.remove("active"));
+        document
+          .querySelectorAll(".tab-btn")
+          .forEach((btn) => btn.classList.remove("active"));
 
-      <fieldset>
-        <label for="primaryColor">Primary Color</label>
-        <input
-          type="color"
-          name="primaryColor"
-          id="primaryColor"
-          value="#5f5854"
-        />
-      </fieldset>
+        document.getElementById(`${tabName}-tab`).classList.add("active");
+        event.target.classList.add("active");
 
-      <fieldset>
-        <label for="secondaryColor">Secondary Color</label>
-        <input
-          type="color"
-          name="secondaryColor"
-          id="secondaryColor"
-          value="#c4c8cf"
-        />
-      </fieldset>
+        if (tabName === "browse") loadVinyls();
+        if (tabName === "statistics") loadStatistics();
+      }
 
-      <fieldset>
-        <label for="breed">Breed</label>
-        <select
-          name="breed"
-          id="breed"
-        >
-          <option
-            value=""
-            disabled
-            selected
-          >Select a Breed</option>
-          <optgroup label="Domestic">
-            <option value="Abyssinian">Abyssinian</option>
-            <option value="Bengal">Bengal</option>
-            <option value="Burmese">Burmese</option>
-            <option value="Chartreux">Chartreux</option>
-            <option value="Maine Coon">Maine Coon</option>
-            <option value="Persian">Persian</option>
-            <option value="Ragdoll">Ragdoll</option>
-            <option value="Shorthair">Shorthair</option>
-            <option value="Siamese">Siamese</option>
-            <option value="Sphynx">Sphynx</option>
-            <option value="Ragamuffin">Ragamuffin</option>
-          </optgroup>
-          <optgroup label="Exotic">
-            <option value="Tiger">Tiger</option>
-            <option value="Lion">Lion</option>
-            <option value="Panther">Panther</option>
-            <option value="Jaguar">Jaguar</option>
-            <option value="Lynx">Lynx</option>
-          </optgroup>
-          <optgroup label="Other">
-            <option value="Other">Other</option>
-            <option value="Unknown">Unknown</option>
-          </optgroup>
-        </select>
-      </fieldset>
+      // Load all vinyls
+      async function loadVinyls(filters = {}) {
+        console.log("zww");
+        const container = document.getElementById("vinylsContainer");
+        container.innerHTML = '<div class="loading">Loading vinyls...</div>';
 
-      <fieldset>
-        <label for="description">Description</label>
-        <small>Provide a brief biography.</small>
-        <textarea
-          placeholder="Biography"
-          required
-          minlength="20"
-          name="description"
-          id="description"
-          rows="6"
-          cols="30"
-        ></textarea>
-        <small class="validation">Bio must be at least 20 characters.</small>
-      </fieldset>
+        try {
+          const queryParams = new URLSearchParams(filters);
+          const response = await fetch(`${API_URL}?${queryParams}`);
+          currentVinyls = await response.json();
 
-      <fieldset>
-        <label for="playfulness">Playfulness</label>
-        <small>Chill or chaotic?</small>
-        <input
-          type="range"
-          min="0"
-          max="10"
-          name="playfulness"
-          id="playfulness"
-        />
-      </fieldset>
+          if (currentVinyls.length === 0) {
+            container.innerHTML =
+              "<p>No vinyls found. Add your first vinyl!</p>";
+            return;
+          }
 
-      <fieldset>
-        <label for="appetite">Appetite</label>
-        <small>Is this a hungry Cat?</small>
-        <input
-          type="range"
-          min="0"
-          max="10"
-          name="appetite"
-          id="appetite"
-        />
-      </fieldset>
+          container.innerHTML = currentVinyls
+            .map(
+              (vinyl) => `
+                <div class="vinyl-card" onclick="viewVinyl('${vinyl.id}')">
+                    <h3>${vinyl.title}</h3>
+                    <p><strong>${vinyl.artist}</strong></p>
+                    ${vinyl.year ? `<p>Released: ${vinyl.year}</p>` : ""}
+                    ${vinyl.genre ? `<p>Genre: ${vinyl.genre}</p>` : ""}
+                    ${vinyl.label ? `<p>Label: ${vinyl.label}</p>` : ""}
+                    <p>${vinyl.tracks.length} tracks</p>
+                    <div class="actions">
+                        <button onclick="event.stopPropagation(); editVinyl('${
+                          vinyl.id
+                        }')" class="secondary">Edit</button>
+                        <button onclick="event.stopPropagation(); deleteVinyl('${
+                          vinyl.id
+                        }')" class="danger">Delete</button>
+                    </div>
+                </div>
+            `
+            )
+            .join("");
 
-      <fieldset>
-        <legend>Food</legend>
-        <small>Any Preferences?</small>
-        <label for="wet">
-          <input
-            type="radio"
-            id="wet"
-            name="food"
-            value="wet"
-          />
-          <span>Wet</span>
-        </label>
-        <label for="dry">
-          <input
-            type="radio"
-            id="dry"
-            name="food"
-            value="dry"
-          />
-          <span>Dry</span>
-        </label>
-        <label for="mixed">
-          <input
-            type="radio"
-            id="mixed"
-            name="food"
-            value="mixed"
-          />
-          <span>Mixed</span>
-        </label>
-      </fieldset>
+          // Populate genre filter
+          const genres = [
+            ...new Set(currentVinyls.map((v) => v.genre).filter(Boolean)),
+          ];
+          const genreFilter = document.getElementById("genreFilter");
+          genreFilter.innerHTML =
+            '<option value="">All Genres</option>' +
+            genres.map((g) => `<option value="${g}">${g}</option>`).join("");
+        } catch (error) {
+          container.innerHTML =
+            "<p>Error loading vinyls. Please try again.</p>";
+          console.error("Error:", error);
+        }
+      }
 
-      <fieldset>
-        <legend>Rescue Status</legend>
-        <label for="isAdopted">
-          <input
-            type="checkbox"
-            name="isAdopted"
-            id="isAdopted"
-          />
-          <span>Adopted</span>
-        </label>
-      </fieldset>
+      // Apply filters
+      function applyFilters() {
+        const filters = {
+          search: document.getElementById("searchInput").value,
+          genre: document.getElementById("genreFilter").value,
+          sortBy: document.getElementById("sortBy").value,
+          order: document.getElementById("sortOrder").value,
+        };
 
-      <fieldset>
-        <label for="microchip">Microchip Number</label>
-        <small>It's usually nine digits</small>
-        <input
-          required
-          type="number"
-          name="microchip"
-          step="1"
-          max="999999999"
-          id="microchip"
-          placeholder="e.g. 123456789"
-        />
-      </fieldset>
+        // Remove empty filters
+        Object.keys(filters).forEach(
+          (key) => !filters[key] && delete filters[key]
+        );
 
-      <fieldset>
-        <button class="save">Save</button>
-        <button class="reset">Reset</button>
-      </fieldset>
-    </form>
+        loadVinyls(filters);
+      }
 
+      // Add track input
+      let trackCount = 0;
+      function addTrackInput() {
+        trackCount++;
+        const container = document.getElementById("tracksContainer");
+        const trackDiv = document.createElement("div");
+        trackDiv.className = "track-inputs";
+        trackDiv.innerHTML = `
+            <input type="text" placeholder="Track name" name="track_name_${trackCount}" required>
+            <input type="text" placeholder="Duration (MM:SS)" name="track_duration_${trackCount}" pattern="\\d{1,2}:\\d{2}" required>
+            <input type="text" placeholder="Side (A1, B2, etc)" name="track_side_${trackCount}" pattern="[AB]\\d{1,2}" required>
+            <button type="button" onclick="this.parentElement.remove()" class="danger">Remove</button>
+        `;
+        container.appendChild(trackDiv);
+      }
 
-  </main>
+      // Add vinyl form submission
+      document
+        .getElementById("addVinylForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const formData = new FormData(e.target);
 
-  <section id="content">
-  </section>
+          const data = {
+            title: formData.get("title"),
+            artist: formData.get("artist"),
+            year: formData.get("year") ? parseInt(formData.get("year")) : null,
+            label: formData.get("label") || null,
+            genre: formData.get("genre") || null,
+            description: formData.get("description") || null,
+            tracks: [],
+          };
 
-  <section>
-    <h3>Learning Prompts</h3>
-    <p>Can you add a connection string to the NodeJS environment (e.g. .env file) for your own MongoDB Atlas Cluster?
-    </p>
-    <p>Use MongoDB Compass to verify that your data collection form is working. </p>
-    <p>Looking ahead: in the future we will build a full CRUD implementation. Can you envision how we might add features
-      for Updating and deleting individual records?</p>
-  </section>
+          // Collect tracks
+          for (let i = 1; i <= trackCount; i++) {
+            const name = formData.get(`track_name_${i}`);
+            if (name) {
+              data.tracks.push({
+                name,
+                duration: formData.get(`track_duration_${i}`),
+                side: formData.get(`track_side_${i}`),
+              });
+            }
+          }
 
-  <footer>
-    Created by <a href="https://nsitu.ca">Harold Sikkema</a> in the context of
-    Systems Design in the Interaction Design program at Sheridan College.
-  </footer>
+          try {
+            const response = await fetch(API_URL, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(data),
+            });
 
-  <script
-    src="script.js"
-    type="module"
-  ></script>
+            if (response.ok) {
+              showMessage("addMessage", "Vinyl added successfully!", "success");
+              e.target.reset();
+              document.getElementById("tracksContainer").innerHTML = "";
+              trackCount = 0;
+              setTimeout(() => {
+                showTab("browse");
+                document.querySelector(".tab-btn").click();
+              }, 1500);
+            } else {
+              const error = await response.json();
+              showMessage(
+                "addMessage",
+                error.message || "Error adding vinyl",
+                "error"
+              );
+            }
+          } catch (error) {
+            showMessage(
+              "addMessage",
+              "Error adding vinyl. Please try again.",
+              "error"
+            );
+            console.error("Error:", error);
+          }
+        });
 
-</body>
+      // View vinyl details
+      async function viewVinyl(id) {
+        try {
+          const response = await fetch(`${API_URL}/${id}`);
+          const vinyl = await response.json();
 
+          document.getElementById("modalTitle").textContent = vinyl.title;
+          document.getElementById("modalBody").innerHTML = `
+                <p><strong>Artist:</strong> ${vinyl.artist}</p>
+                ${
+                  vinyl.year
+                    ? `<p><strong>Year:</strong> ${vinyl.year}</p>`
+                    : ""
+                }
+                ${
+                  vinyl.label
+                    ? `<p><strong>Label:</strong> ${vinyl.label}</p>`
+                    : ""
+                }
+                ${
+                  vinyl.genre
+                    ? `<p><strong>Genre:</strong> ${vinyl.genre}</p>`
+                    : ""
+                }
+                ${
+                  vinyl.description
+                    ? `<p><strong>Description:</strong> ${vinyl.description}</p>`
+                    : ""
+                }
+                
+                <h3 style="margin-top: 20px;">Tracklist</h3>
+                ${vinyl.tracks
+                  .map(
+                    (track) => `
+                    <div class="track-item">
+                        <span>${track.side}. ${track.name}</span>
+                        <span>${track.duration}</span>
+                    </div>
+                `
+                  )
+                  .join("")}
+            `;
+
+          document.getElementById("vinylModal").style.display = "block";
+        } catch (error) {
+          console.error("Error:", error);
+        }
+      }
+
+      // Edit vinyl
+      function editVinyl(id) {
+        alert(
+          "Edit functionality - Coming soon!\nFor now, you can delete and recreate the record."
+        );
+      }
+
+      // Delete vinyl
+      async function deleteVinyl(id) {
+        if (!confirm("Are you sure you want to delete this vinyl?")) return;
+
+        try {
+          const response = await fetch(`${API_URL}/${id}`, {
+            method: "DELETE",
+          });
+
+          if (response.ok) {
+            loadVinyls();
+          } else {
+            alert("Error deleting vinyl");
+          }
+        } catch (error) {
+          alert("Error deleting vinyl. Please try again.");
+          console.error("Error:", error);
+        }
+      }
+
+      // Load statistics
+      async function loadStatistics() {
+        const container = document.getElementById("statsContainer");
+        container.innerHTML =
+          '<div class="loading">Loading statistics...</div>';
+
+        try {
+          const response = await fetch(`${API_URL}/statistics`);
+          const stats = await response.json();
+
+          container.innerHTML = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>${stats.totalVinyls}</h3>
+                        <p>Total Vinyls</p>
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 30px;">Vinyls by Genre</h3>
+                <div class="stats-grid">
+                    ${stats.vinylsByGenre
+                      .map(
+                        (item) => `
+                        <div class="stat-card">
+                            <h3>${item.count}</h3>
+                            <p>${item.genre}</p>
+                        </div>
+                    `
+                      )
+                      .join("")}
+                </div>
+
+                <h3 style="margin-top: 30px;">Vinyls by Year</h3>
+                <div class="stats-grid">
+                    ${stats.vinylsByYear
+                      .slice(0, 10)
+                      .map(
+                        (item) => `
+                        <div class="stat-card">
+                            <h3>${item.count}</h3>
+                            <p>${item.year}</p>
+                        </div>
+                    `
+                      )
+                      .join("")}
+                </div>
+            `;
+        } catch (error) {
+          container.innerHTML = "<p>Error loading statistics.</p>";
+          console.error("Error:", error);
+        }
+      }
+
+      // Close modal
+      function closeModal() {
+        document.getElementById("vinylModal").style.display = "none";
+      }
+
+      // Show message
+      function showMessage(elementId, message, type) {
+        const element = document.getElementById(elementId);
+        element.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+        setTimeout(() => (element.innerHTML = ""), 3000);
+      }
+
+      // Load vinyls on page load
+      loadVinyls();
+    </script>
+  </body>
 </html>
