@@ -156,42 +156,4 @@ router.post("/vinyls/:id/tracks", async (req, res) => {
   }
 });
 
-// Statistics
-router.get("/vinyls/statistics", async (req, res) => {
-  try {
-    const totalVinyls = await prisma[model].count();
-
-    const byGenre = await prisma[model].groupBy({
-      by: ["genre"],
-      _count: { genre: true },
-    });
-
-    const byYear = await prisma[model].groupBy({
-      by: ["year"],
-      _count: { year: true },
-      orderBy: { year: "desc" },
-    });
-
-    res.send({
-      totalVinyls,
-      vinylsByGenre: byGenre.map((v) => ({
-        genre: v.genre || "Unknown",
-        count: v._count.genre,
-      })),
-      vinylsByYear: byYear.map((v) => ({
-        year: v.year || "Unknown",
-        count: v._count.year,
-      })),
-    });
-  } catch (err) {
-    console.error("GET /vinyls-statistics error:", err);
-    res
-      .status(500)
-      .send({
-        error: "Failed to compute statistics",
-        details: err.message || err,
-      });
-  }
-});
-
 export default router;
