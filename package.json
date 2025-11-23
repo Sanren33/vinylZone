@@ -1,7 +1,8 @@
 {
   "name": "vinylzone",
   "version": "1.0.0",
-  "description": "Vinyl record collection management application",  "main": "server.js",
+  "description": "Vinyl record collection management application",
+  "main": "server.js",
   "scripts": {
     "setup": "npm install",
     "start": "node --watch --env-file=.env server.js",
