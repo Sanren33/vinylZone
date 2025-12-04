@@ -1,30 +1,87 @@
 generator client {
-  provider = "prisma-client-js"
+    provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "mongodb"
-  url      = env("DATABASE_URL")
+    provider = "mongodb"
+    url      = env("DATABASE_URL")
+}
+
+model user {
+    id        String   @id @default(auto()) @map("_id") @db.ObjectId
+    auth0Id   String   @unique // Auth0 user ID
+    email     String   @unique
+    name      String?
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    // User's collection and wishlist items
+    collections collection[]
+    wishlists   wishlist[]
+
+    // Following/watching users
+    members member[]
 }
 
 model vinyl {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  title       String
-  artist      String
-  year        Int?
-  label       String?
-  genre       String?
-  tracks      track[]
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+    id          String   @id @default(auto()) @map("_id") @db.ObjectId
+    title       String
+    artist      String
+    year        Int?
+    label       String?
+    genre       String?
+    tracks      track[]
+    description String?
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+
+    collections collection[]
+    wishlists   wishlist[]
 }
 
 model track {
-  id       String @id @default(auto()) @map("_id") @db.ObjectId
-  vinylId  String @db.ObjectId
-  vinyl    vinyl  @relation(fields: [vinylId], references: [id], onDelete: Cascade)
-  name     String
-  duration String
-  side     String // A1, A2, B1, B2, etc.
+    id       String @id @default(auto()) @map("_id") @db.ObjectId
+    vinylId  String @db.ObjectId
+    vinyl    vinyl  @relation(fields: [vinylId], references: [id], onDelete: Cascade)
+    name     String
+    duration String
+    side     String // A1, A2, B1, B2, etc.
+}
+
+model collection {
+    id          String   @id @default(auto()) @map("_id") @db.ObjectId
+    userId      String   @db.ObjectId
+    user        user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    vinylId     String   @db.ObjectId
+    vinyl       vinyl    @relation(fields: [vinylId], references: [id], onDelete: Cascade)
+    price       Float?
+    condition   String? // "Mint", "Very Good", "Good", "Fair", "Poor"
+    note        String?
+    purchasedAt DateTime
+    createdAt   DateTime @default(now())
+
+    @@unique([userId, vinylId]) // Prevent duplicate vinyls in user's collection
+}
+
+model wishlist {
+    id        String   @id @default(auto()) @map("_id") @db.ObjectId
+    userId    String   @db.ObjectId
+    user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    vinylId   String   @db.ObjectId
+    vinyl     vinyl    @relation(fields: [vinylId], references: [id], onDelete: Cascade)
+    note      String?
+    addedAt   DateTime @default(now())
+    createdAt DateTime @default(now())
+
+    @@unique([userId, vinylId]) // Prevent duplicate vinyls in user's wishlist
+}
+
+model member {
+    id        String   @id @default(auto()) @map("_id") @db.ObjectId
+    userId    String   @db.ObjectId
+    user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    friendId  String   @db.ObjectId // Followed friend id
+    createdAt DateTime @default(now())
+
+    @@unique([userId, friendId]) // Prevent duplicate follows
 }
