@@ -6,7 +6,12 @@ const model = "vinyl";
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
-import { checkJwt, getOrCreateUser } from "../middleware/auth.js";
+// Import Auth0's requiresAuth from express-openid-connect
+import auth0 from "express-openid-connect";
+const { requiresAuth } = auth0;
+
+// Import our custom middleware
+import { getOrCreateUser } from "../middleware/auth.js";
 
 // ==================== PUBLIC VINYL ROUTES (No Auth Required) ====================
 
@@ -64,7 +69,9 @@ router.get("/vinyls/:id", async (req, res) => {
 // ==================== PROTECTED ROUTES (Auth Required) ====================
 
 // Apply auth middleware to all routes below
-router.use(checkJwt, getOrCreateUser);
+// requiresAuth() checks Auth0 session
+// getOrCreateUser syncs Auth0 user with database and attaches req.user
+router.use(requiresAuth(), getOrCreateUser);
 
 // ==================== CURRENT USER ROUTES ====================
 
