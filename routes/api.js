@@ -102,25 +102,6 @@ router.get("/me", async (req, res) => {
   }
 });
 
-// Update current user profile
-router.put("/me", async (req, res) => {
-  try {
-    const { name, email } = req.body;
-
-    const updated = await prisma.user.update({
-      where: { id: req.user.id },
-      data: { name, email },
-    });
-
-    res.send(updated);
-  } catch (err) {
-    console.error("PUT /me error:", err);
-    res
-      .status(500)
-      .send({ error: "Failed to update user", details: err.message || err });
-  }
-});
-
 // ==================== MY COLLECTION ROUTES ====================
 
 // Get current user's collection
@@ -131,12 +112,14 @@ router.get("/me/collection", async (req, res) => {
       order = "desc",
       condition,
       genre,
+      vinylId,
     } = req.query;
 
     const where = { userId: req.user.id };
 
     if (condition) where.condition = condition;
     if (genre) where.vinyl = { genre };
+    if (vinylId) where.vinylId = vinylId;
 
     const result = await prisma.collection.findMany({
       where,
@@ -153,6 +136,28 @@ router.get("/me/collection", async (req, res) => {
     console.error("GET /me/collection error:", err);
     res.status(500).send({
       error: "Failed to fetch collection",
+      details: err.message || err,
+    });
+  }
+});
+
+// Get collection entry for current user by vinylId
+router.get("/me/collection/by-vinyl/:vinylId", async (req, res) => {
+  try {
+    const result = await prisma.collection.findFirst({
+      where: { userId: req.user.id, vinylId: req.params.vinylId },
+      include: {
+        vinyl: {
+          include: { tracks: { orderBy: { side: "asc" } } },
+        },
+      },
+    });
+    if (!result) return res.status(404).send({ error: "Not found" });
+    res.send(result);
+  } catch (err) {
+    console.error("GET /me/collection/by-vinyl error:", err);
+    res.status(500).send({
+      error: "Failed to fetch collection entry",
       details: err.message || err,
     });
   }
@@ -307,35 +312,6 @@ router.post("/me/wishlist", async (req, res) => {
     console.error("POST /me/wishlist error:", err);
     res.status(500).send({
       error: "Failed to add to wishlist",
-      details: err.message || err,
-    });
-  }
-});
-
-// Update wishlist item (user can only update their own)
-router.put("/wishlist/:id", async (req, res) => {
-  try {
-    // Verify the wishlist item belongs to the current user
-    const item = await prisma.wishlist.findUnique({
-      where: { id: req.params.id },
-    });
-
-    if (!item)
-      return res.status(404).send({ error: "Wishlist item not found" });
-    if (item.userId !== req.user.id)
-      return res.status(403).send({ error: "Forbidden" });
-
-    const updated = await prisma.wishlist.update({
-      where: { id: req.params.id },
-      data: req.body,
-      include: { vinyl: true },
-    });
-
-    res.send(updated);
-  } catch (err) {
-    console.error("PUT /wishlist/:id error:", err);
-    res.status(500).send({
-      error: "Failed to update wishlist item",
       details: err.message || err,
     });
   }
@@ -535,7 +511,7 @@ router.get("/members/:friendId/wishlist", async (req, res) => {
   }
 });
 
-// ==================== ADMIN VINYL ROUTES (Create, Update, Delete) ====================
+// ==================== VINYL ROUTES (Create, Update, Delete) ====================
 
 // Create new vinyl
 router.post("/vinyls", async (req, res) => {
