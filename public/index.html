@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="style.css" />
@@ -28,10 +28,9 @@
 
       <!-- Main Content -->
       <main class="main-content" id="mainContent">
-        <!-- Content will be loaded here -->
         <div class="loading">
           <div class="spinner"></div>
-          <p>Loading...</p>
+          <p>Loading your collection...</p>
         </div>
       </main>
     </div>
@@ -48,7 +47,88 @@
 
         <div class="modal-layout">
           <div class="vinyl-visual">
-            <div class="vinyl-record spinning"></div>
+            <div class="detail-actions">
+              <button
+                class="btn-icon tooltip"
+                id="wishlistToggleBtn"
+                onclick="toggleWishlist()"
+              >
+                🎁
+                <span class="tooltiptext" id="wishlistToggleText"
+                  >Add to wishlist</span
+                >
+              </button>
+            </div>
+            <div class="vinyl-record"></div>
+            <div class="collection-accordion" id="collectionAccordion">
+              <button
+                class="collapse-toggle"
+                type="button"
+                id="collectionToggleBtn"
+                onclick="toggleCollectionForm()"
+                aria-expanded="false"
+              >
+                <span id="collectionToggleLabel">Add to Collection</span>
+                <span class="collapse-arrow" id="collectionToggleArrow">▼</span>
+              </button>
+              <div id="collectionFormBody" class="collapse-body">
+                <div class="form-row">
+                  <div class="form-field">
+                    <label>Price Paid ($)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      id="collectionPrice"
+                      placeholder="e.g., 24.99"
+                    />
+                  </div>
+                  <div class="form-field">
+                    <label>Condition</label>
+                    <select id="collectionCondition">
+                      <option value="">Select condition</option>
+                      <option value="Mint">Mint</option>
+                      <option value="Very Good">Very Good</option>
+                      <option value="Good">Good</option>
+                      <option value="Fair">Fair</option>
+                      <option value="Poor">Poor</option>
+                    </select>
+                  </div>
+                  <div class="form-field">
+                    <label>Purchased At</label>
+                    <input type="date" id="collectionDate" />
+                  </div>
+                  <div class="form-field">
+                    <label>Notes</label>
+                    <textarea
+                      id="collectionNote"
+                      rows="2"
+                      placeholder="Store, pressing details, memories..."
+                    ></textarea>
+                  </div>
+                </div>
+
+                <div class="form-actions">
+                  <button
+                    type="button"
+                    id="collectionRemoveBtn"
+                    class="btn-secondary"
+                    style="display: none;"
+                    onclick="removeFromCollection()"
+                  >
+                    Remove from Collection
+                  </button>
+                  <button
+                    type="button"
+                    id="collectionSaveBtn"
+                    class="btn-primary"
+                    onclick="saveToCollection()"
+                  >
+                    Add
+                  </button>
+                </div>
+                <p class="helper-text" id="collectionMeta"></p>
+              </div>
+            </div>
           </div>
 
           <div class="vinyl-details">
@@ -57,21 +137,6 @@
                 <h2 id="viewTitle" class="detail-title"></h2>
                 <p id="viewArtist" class="detail-artist"></p>
               </div>
-              <button
-                class="btn-edit"
-                onclick="editFromView()"
-                title="Edit Record"
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path
-                    d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
-                  ></path>
-                  <path
-                    d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
-                  ></path>
-                </svg>
-                <span>Edit</span>
-              </button>
             </div>
 
             <div class="details-meta">
@@ -104,8 +169,30 @@
             </div>
 
             <div class="modal-actions">
-              <button class="btn-danger" onclick="deleteFromView()">
+              <button
+                class="btn-danger tooltip"
+                id="deleteRecordBtn"
+                onclick="deleteFromView()"
+              >
                 Delete Record
+                <span class="tooltiptext" id="deleteRecordTooltip">
+                  Delete this record
+                </span>
+              </button>
+              <button
+                class="btn-edit"
+                onclick="editFromView()"
+                title="Edit Record"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path
+                    d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+                  ></path>
+                  <path
+                    d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+                  ></path>
+                </svg>
+                <span>Edit</span>
               </button>
             </div>
           </div>
@@ -133,7 +220,6 @@
               <label>Title *</label>
               <input type="text" name="title" required />
             </div>
-
             <div class="form-field">
               <label>Artist *</label>
               <input type="text" name="artist" required />
@@ -145,12 +231,10 @@
               <label>Year</label>
               <input type="number" name="year" min="1900" max="2025" />
             </div>
-
             <div class="form-field">
               <label>Genre</label>
               <input type="text" name="genre" />
             </div>
-
             <div class="form-field">
               <label>Label</label>
               <input type="text" name="label" />
@@ -191,6 +275,7 @@
         </form>
       </div>
     </div>
+
     <script src="./script.js"></script>
   </body>
 </html>
