@@ -69,7 +69,6 @@ model wishlist {
     user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
     vinylId   String   @db.ObjectId
     vinyl     vinyl    @relation(fields: [vinylId], references: [id], onDelete: Cascade)
-    note      String?
     addedAt   DateTime @default(now())
     createdAt DateTime @default(now())
 
